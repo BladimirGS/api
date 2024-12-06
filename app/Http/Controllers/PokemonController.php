@@ -26,64 +26,64 @@ class PokemonController extends Controller
     // Crear un nuevo Pokémon
     public function store(Request $request)
     {
+        // Valida que el nombre y la imagen sean proporcionados
         $request->validate([
             'nombre' => 'required|string|max:255',
-            'imagen' => 'required|image|mimes:jpg,png,jpeg,gif|max:2048',
+            'imagen' => 'required|image|mimes:jpg,jpeg,png|max:2048', // Asegúrate de aceptar imágenes
         ]);
 
-        // Subir la imagen
+        // Obtiene la imagen y la guarda
         $image = $request->file('imagen');
-        $imagePath = $image->store('pokemon', 'public'); // Guardar imagen en storage/public
+        $imagePath = $image->store('pokemons', 'public'); // Guardará en 'storage/app/public/pokemons'
 
-        // Crear el Pokémon
+        // Crea el nuevo Pokémon
         $pokemon = Pokemon::create([
-            'nombre' => $request->nombre,
-            'imagen' => $imagePath,
+            'nombre' => $request->input('nombre'),
+            'imagen' => $imagePath, // Almacena la ruta de la imagen
         ]);
-
-        return response()->json($pokemon, 201); // 201 para éxito en creación
-    }
-
-    // Obtener un Pokémon por su ID
-    public function show($id)
-    {
-        $pokemon = Pokemon::find($id);
-
-        if (!$pokemon) {
-            return response()->json(['message' => 'Pokémon not found'], 404);
-        }
 
         return response()->json([
-            'id' => $pokemon->id,
-            'nombre' => $pokemon->nombre,
-            'imagen' => url(Storage::url($pokemon->imagen)),
-        ]);
+            'status' => 'success',
+            'pokemon' => $pokemon,
+        ], 201);
     }
 
-    // Actualizar un Pokémon existente
     public function update(Request $request, $id)
     {
-        // Validar los datos
-        $request->validate([
-            'nombre' => 'required|string|max:255',
-            'imagen' => 'string',
-        ]);
-    
-        // Encontrar el Pokémon por ID
-        $pokemon = Pokemon::findOrFail($id);
-    
-        // Actualizar los datos
-        $pokemon->nombre = $request->input('nombre');
-    
-        // Si hay una imagen, manejar la carga
-        $pokemon->imagen = "pokemon/" . $request->input('imagen');
-    
-        // Guardar los cambios
-        $pokemon->save();
-    
-        // Devolver la respuesta con el Pokémon actualizado
-        return response()->json($request, 200);
-    }    
+     // Encuentra el Pokémon a actualizar
+     $pokemon = Pokemon::findOrFail($id);
+
+     // Valida los datos
+     $request->validate([
+         'nombre' => 'required|string|max:255',
+         'imagen' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+     ]);
+ 
+     // Actualiza el nombre
+     $pokemon->nombre = $request->input('nombre');
+ 
+     // Si hay una nueva imagen, reemplaza la existente
+     if ($request->hasFile('imagen')) {
+         $image = $request->file('imagen');
+         $imagePath = $image->store('pokemons', 'public'); // Guardar en 'storage/app/public/pokemons'
+ 
+         // Elimina la imagen antigua si existe
+         if ($pokemon->imagen) {
+             Storage::disk('public')->delete($pokemon->imagen);
+         }
+ 
+         // Actualiza la ruta de la imagen
+         $pokemon->imagen = $imagePath;
+     }
+ 
+     // Guarda los cambios
+     $pokemon->save();
+ 
+     return response()->json([
+         'status' => 'success',
+         'pokemon' => $pokemon,
+     ], 200);
+    }
 
     // Eliminar un Pokémon
     public function destroy($id)

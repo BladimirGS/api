@@ -12,7 +12,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/pokemon', [PokemonController::class, 'index']);
 
-Route::put('/pokemon/{id}', [PokemonController::class, 'update']);
+Route::post('/pokemon/update/{id}', [PokemonController::class, 'update']);
 
-Route::delete('pokemon/{id}/delete', [PokemonController::class, 'destroy']);
+Route::post('pokemon/create', [PokemonController::class, 'store']);
+
+Route::delete('pokemon/delete/{id}', [PokemonController::class, 'destroy']);
 
