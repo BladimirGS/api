@@ -66,11 +66,8 @@ class PokemonController extends Controller
         // Validar los datos
         $request->validate([
             'nombre' => 'required|string|max:255',
-            'imagen' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Validar la imagen
+            'imagen' => 'string',
         ]);
-    
-        // Verificar si los datos están llegando correctamente
-        Log::info('Datos recibidos: ', $request->all());
     
         // Encontrar el Pokémon por ID
         $pokemon = Pokemon::findOrFail($id);
@@ -79,22 +76,13 @@ class PokemonController extends Controller
         $pokemon->nombre = $request->input('nombre');
     
         // Si hay una imagen, manejar la carga
-        if ($request->hasFile('imagen')) {
-            // Eliminar la imagen anterior si existe
-            if ($pokemon->imagen && Storage::exists($pokemon->imagen)) {
-                Storage::delete($pokemon->imagen);
-            }
-    
-            // Almacenar la nueva imagen
-            $filePath = $request->file('imagen')->store('public/images');
-            $pokemon->imagen = $filePath;
-        }
+        $pokemon->imagen = "pokemon/" . $request->input('imagen');
     
         // Guardar los cambios
         $pokemon->save();
     
         // Devolver la respuesta con el Pokémon actualizado
-        return response()->json($pokemon, 200);
+        return response()->json($request, 200);
     }    
 
     // Eliminar un Pokémon
