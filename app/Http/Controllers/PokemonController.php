@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Pokemon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class PokemonController extends Controller
@@ -59,42 +60,42 @@ class PokemonController extends Controller
         ]);
     }
 
-    // Actualizar un Pokémon
+    // Actualizar un Pokémon existente
     public function update(Request $request, $id)
     {
-        $pokemon = Pokemon::find($id);
-
-        if (!$pokemon) {
-            return response()->json(['message' => 'Pokémon not found'], 404);
-        }
-
+        // Validar los datos
         $request->validate([
-            'nombre' => 'sometimes|string|max:255',
-            'imagen' => 'sometimes|image|mimes:jpg,png,jpeg,gif|max:2048',
+            'nombre' => 'required|string|max:255',
+            'imagen' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Validar la imagen
         ]);
-
-        // Actualizar el nombre si se proporciona
-        if ($request->has('nombre')) {
-            $pokemon->nombre = $request->nombre;
-        }
-
-        // Actualizar la imagen si se proporciona
+    
+        // Verificar si los datos están llegando correctamente
+        Log::info('Datos recibidos: ', $request->all());
+    
+        // Encontrar el Pokémon por ID
+        $pokemon = Pokemon::findOrFail($id);
+    
+        // Actualizar los datos
+        $pokemon->nombre = $request->input('nombre');
+    
+        // Si hay una imagen, manejar la carga
         if ($request->hasFile('imagen')) {
-            // Eliminar la imagen anterior
-            if (Storage::exists($pokemon->imagen)) {
+            // Eliminar la imagen anterior si existe
+            if ($pokemon->imagen && Storage::exists($pokemon->imagen)) {
                 Storage::delete($pokemon->imagen);
             }
-
-            // Subir la nueva imagen
-            $image = $request->file('imagen');
-            $imagePath = $image->store('pokemon', 'public');
-            $pokemon->imagen = $imagePath;
+    
+            // Almacenar la nueva imagen
+            $filePath = $request->file('imagen')->store('public/images');
+            $pokemon->imagen = $filePath;
         }
-
+    
+        // Guardar los cambios
         $pokemon->save();
-
-        return response()->json($pokemon);
-    }
+    
+        // Devolver la respuesta con el Pokémon actualizado
+        return response()->json($pokemon, 200);
+    }    
 
     // Eliminar un Pokémon
     public function destroy($id)

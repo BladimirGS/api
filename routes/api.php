@@ -8,4 +8,9 @@ use Illuminate\Support\Facades\Route;
 //     return $request->user();
 // })->middleware('auth:sanctum');
 
-Route::apiResource('pokemon', PokemonController::class);
+// Route::apiResource('pokemon', PokemonController::class);
+
+Route::get('/pokemon', [PokemonController::class, 'index']);
+
+Route::put('/pokemon/{id}', [PokemonController::class, 'update']);
+
