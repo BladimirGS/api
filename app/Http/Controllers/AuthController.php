@@ -15,9 +15,11 @@ class AuthController extends Controller
 
         // Revisar el password
         if (!Auth::attempt($data)) {
-            return response([
+            return response()->json([
+                'success' => false,
+                'message' => 'El email o el password son incorrectos',
                 'errors' => ['El email o el password son incorrectos']
-            ], 422);
+            ], 422);            
         }        
 
         // Autenticar al usuario
