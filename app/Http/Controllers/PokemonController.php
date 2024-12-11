@@ -25,11 +25,11 @@ class PokemonController extends Controller
     {
         $request->validate([
             'nombre' => 'required|string|max:255',
-            'imagen' => 'required|image|mimes:jpg,jpeg,png|max:2048', 
+            'imagen' => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $image = $request->file('imagen');
-        $imagePath = $image->store('pokemons', 'public'); 
+        $imagePath = $image->store('pokemons', 'public');
 
         $pokemon = Pokemon::create([
             'nombre' => $request->input('nombre'),
@@ -44,32 +44,35 @@ class PokemonController extends Controller
 
     public function update(Request $request, $id)
     {
-     $pokemon = Pokemon::findOrFail($id);
+        $pokemon = Pokemon::findOrFail($id);
 
-     $request->validate([
-         'nombre' => 'required|string|max:255',
-         'imagen' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-     ]);
- 
-     $pokemon->nombre = $request->input('nombre');
- 
-     if ($request->hasFile('imagen')) {
-         $image = $request->file('imagen');
-         $imagePath = $image->store('pokemons', 'public'); 
- 
-         if ($pokemon->imagen) {
-             Storage::disk('public')->delete($pokemon->imagen);
-         }
- 
-         $pokemon->imagen = $imagePath;
-     }
- 
-     $pokemon->save();
- 
-     return response()->json([
-         'status' => 'success',
-         'pokemon' => $pokemon,
-     ], 200);
+        $request->validate([
+            'nombre' => 'required|string|max:255',
+            'imagen' => 'nullable',
+        ]);
+
+        $pokemon->nombre = $request->input('nombre');
+
+        if ($request->hasFile('imagen')) {
+            $image = $request->file('imagen');
+            $imagePath = $image->store('pokemons', 'public');
+
+            if ($pokemon->imagen) {
+                Storage::disk('public')->delete($pokemon->imagen);
+            }
+
+            $pokemon->imagen = $imagePath;
+        }
+        if ($request->filled('imagen')) {
+            $pokemon->imagen = "pokemon/" . $request->input('imagen');
+        }
+
+        $pokemon->save();
+
+        return response()->json([
+            'status' => 'success',
+            'pokemon' => $pokemon,
+        ], 200);
     }
 
     public function destroy($id)
