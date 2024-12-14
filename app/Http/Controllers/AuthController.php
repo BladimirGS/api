@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-namespace App\Http\Controllers;
-
 use Illuminate\Http\Request;
 use App\Http\Requests\LoginRequest;
 use Illuminate\Support\Facades\Auth;
@@ -13,7 +11,6 @@ class AuthController extends Controller
     public function login(LoginRequest $request) {
         $data = $request->validated();
 
-        // Revisar el password
         if (!Auth::attempt($data)) {
             return response()->json([
                 'success' => false,
@@ -22,7 +19,6 @@ class AuthController extends Controller
             ], 422);            
         }        
 
-        // Autenticar al usuario
         $user = Auth::user();
         
         return [
@@ -32,12 +28,8 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        $user = $request->user(); // Obtén el usuario autenticado
-
-        // Revoca el token actual del usuario
-        $user->currentAccessToken()->delete();
-
+        Auth::logout();
         return response()->json(['message' => 'Sesión cerrada con éxito'], 200);
-    }
+    }    
 }
 

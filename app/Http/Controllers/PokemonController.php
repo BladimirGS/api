@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Pokemon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Pokemon;
 
 class PokemonController extends Controller
 {
@@ -24,38 +24,31 @@ class PokemonController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nombre' => 'required|string|max:255',
+            'nombre' => 'required|string',
             'imagen' => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        $image = $request->file('imagen');
-        $imagePath = $image->store('pokemons', 'public');
+        $imagePath = $request->file('imagen')->store('pokemons', 'public');
 
         $pokemon = Pokemon::create([
             'nombre' => $request->input('nombre'),
             'imagen' => $imagePath,
         ]);
 
-        return response()->json([
-            'status' => 'success',
-            'pokemon' => $pokemon,
-        ], 201);
+        return response()->json(['status' => 'success', 'pokemon' => $pokemon], 201);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, Pokemon $pokemon)
     {
-        $pokemon = Pokemon::findOrFail($id);
-
         $request->validate([
-            'nombre' => 'required|string|max:255',
-            'imagen' => 'nullable',
+            'nombre' => 'required|string',
+            'imagen' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $pokemon->nombre = $request->input('nombre');
 
         if ($request->hasFile('imagen')) {
-            $image = $request->file('imagen');
-            $imagePath = $image->store('pokemons', 'public');
+            $imagePath = $request->file('imagen')->store('pokemons', 'public');
 
             if ($pokemon->imagen) {
                 Storage::disk('public')->delete($pokemon->imagen);
@@ -63,28 +56,16 @@ class PokemonController extends Controller
 
             $pokemon->imagen = $imagePath;
         }
-        if ($request->filled('imagen')) {
-            $pokemon->imagen = "pokemon/" . $request->input('imagen');
-        }
 
         $pokemon->save();
 
-        return response()->json([
-            'status' => 'success',
-            'pokemon' => $pokemon,
-        ], 200);
+        return response()->json(['status' => 'success', 'pokemon' => $pokemon]);
     }
 
-    public function destroy($id)
+    public function destroy(Pokemon $pokemon)
     {
-        $pokemon = Pokemon::find($id);
-
-        if (!$pokemon) {
-            return response()->json(['message' => 'Pokémon not found'], 404);
-        }
-
-        if (Storage::exists($pokemon->imagen)) {
-            Storage::delete($pokemon->imagen);
+        if ($pokemon->imagen) {
+            Storage::disk('public')->delete($pokemon->imagen);
         }
 
         $pokemon->delete();

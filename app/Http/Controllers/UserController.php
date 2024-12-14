@@ -2,112 +2,70 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use Illuminate\Http\Request;
+use App\Models\User;
 
 class UserController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        $pokemons = User::all()->map(function ($pokemon) {
+        $users = User::all()->map(function ($user) {
             return [
-                'id' => $pokemon->id,
-                'name' => $pokemon->name,
-                'email' => $pokemon->email,
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
             ];
         });
 
-        return response()->json($pokemons);
+        return response()->json($users);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'name' => 'required|string',
+            'email' => 'required|string|email|unique:users',
             'password' => 'required|string',
         ]);
-    
-        $user = new User();
-        $user->name = $request->name;
-        $user->email = $request->email;
-        $user->password = bcrypt($request->password);  // Asegúrate de cifrar la contraseña
-        $user->save();
-    
-        return response()->json($user, 201);
-    }    
 
-    /**
-     * Display the specified resource.
-     */
+        $user = User::create([
+            'name' => $request->input('name'),
+            'email' => $request->input('email'),
+            'password' => bcrypt($request->input('password')),
+        ]);
+
+        return response()->json($user, 201);
+    }
+
     public function show(User $user)
     {
-        //
+        return response()->json($user);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(User $user)
+    public function update(Request $request, User $user)
     {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id)
-    {
-        $user = User::findOrFail($id);
-    
         $request->validate([
             'name' => 'required|string',
-            'email' => 'required|email',
-            'password' => 'nullable',
+            'email' => 'required|string|email|unique:users,email,' . $user->id,
+            'password' => 'nullable|string',
         ]);
-    
+
         $user->name = $request->input('name');
         $user->email = $request->input('email');
-    
-        // Solo actualizar la contraseña si se proporciona
+
         if ($request->filled('password')) {
             $user->password = bcrypt($request->input('password'));
         }
-    
+
         $user->save();
-    
-        return response()->json([
-            'status' => 'success',
-            'user' => $user,
-        ], 200);
-    }    
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
+        return response()->json(['status' => 'success', 'user' => $user], 200);
+    }
+
+    public function destroy(User $user)
     {
-        $pokemon = User::find($id);
+        $user->delete();
 
-        if (!$pokemon) {
-            return response()->json(['message' => 'Pokémon not found'], 404);
-        }
-        $pokemon->delete();
-
-        return response()->json(['message' => 'Pokémon deleted successfully']);
+        return response()->json(['message' => 'User deleted successfully']);
     }
 }
